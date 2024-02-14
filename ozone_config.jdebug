@@ -1,0 +1,19 @@
+void OnProjectLoad (void) {
+  Project.SetDevice ("STM32F401RE");
+  Project.SetHostIF ("USB", "774568106");
+  Project.SetTargetIF ("SWD");
+  Project.SetTIFSpeed ("4 MHz");
+  Project.AddSvdFile ("D:\SEGGER\Ozone\Config\CPU\Cortex-M4F.svd");
+  Project.AddSvdFile ("D:\stm32f4_svd\STM32F4_svd_V1.9\STM32F401.svd");
+  File.Open ("D:\STM32_Projects\Common\output\out.elf");
+  Util.Log("---Debug started.---");
+  Debug.SetResetMode(RM_RESET_AND_RUN);
+  Break.SetOnSrc("main");
+}
+
+void AfterProjectLoad (void) {
+  //
+  //  Start application
+  //
+  Debug.Start();
+}
