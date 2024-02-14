@@ -1,28 +1,25 @@
 COMPILER := arm-none-eabi-gcc
 CPU := cortex-m4
 CFLAGS := -mthumb -Wall -O0 -mcpu=$(CPU)
-LINKER_SCRIPT_FILE = ./system/STM32F401RETX_FLASH.ld
-INCLUDE1 := ./Inc
-INCLUDE2 := ../GPIO/driver
-INCLUDE3 := ../EXTI/driver
-INCLUDE4 := ../NVIC/driver
-INCLUDE5 := ../spi/driver
-INCLUDE := -I$(INCLUDE1) -I$(INCLUDE2) -I$(INCLUDE3) -I$(INCLUDE4) -I$(INCLUDE5)
+LINKER_SCRIPT_FILE = common/from_ST/STM32F401RETX_FLASH.ld
+
+INCLUDE := -I ./driver/inc
 OUTPUT_DIR := output
 ELF_FILE := out.elf
 
+# Ozone debugger
 OZONE_DIR := D:/SEGGER/Ozone/Ozone.exe
 OZONE_CFG := ozone_config.jdebug
 
-SRC_FILE = system/startup_stm32f401retx.s
-SRC_FILE += ../GPIO/driver/gpio.c
-SRC_FILE += system/syscalls.c
-SRC_FILE += system/sysmem.c
-SRC_FILE += Src/stub.c
-SRC_FILE += ../$(MODULE)/test/$(TEST_FILE).c
-SRC_FILE += ../EXTI/driver/external_interrupt.c
-SRC_FILE += ../NVIC/driver/interrupt.c
-SRC_FILE += ../SPI/driver/spi.c
+# Source file directory
+SRC_FILE = common/from_ST/startup_stm32f401retx.s
+SRC_FILE += common/from_ST/syscalls.c
+SRC_FILE += common/from_ST/sysmem.c
+SRC_FILE += driver/src/stub.c
+SRC_FILE += driver/src/gpio.c
+SRC_FILE += driver/src/external_interrupt.c
+SRC_FILE += driver/src/interrupt.c
+SRC_FILE += test/$(MODULE)/$(TEST_FILE).c
 
 # Object files
 OBJEC = $(OUTPUT_DIR)/startup_stm32f401retx.o
@@ -30,46 +27,42 @@ OBJEC += $(OUTPUT_DIR)/gpio.o
 OBJEC += $(OUTPUT_DIR)/syscalls.o
 OBJEC += $(OUTPUT_DIR)/sysmem.o
 OBJEC += $(OUTPUT_DIR)/stub.o
-OBJEC += $(OUTPUT_DIR)/$(TEST_FILE).o
 OBJEC += $(OUTPUT_DIR)/external_interrupt.o
 OBJEC += $(OUTPUT_DIR)/interrupt.o
-OBJEC += $(OUTPUT_DIR)/spi.o
+OBJEC += $(OUTPUT_DIR)/$(TEST_FILE).o
 
 # Make object files
 mk_obj: make_dir $(OBJEC)
 
-$(OUTPUT_DIR)/startup_stm32f401retx.o: system/startup_stm32f401retx.s
+$(OUTPUT_DIR)/startup_stm32f401retx.o: common/from_ST/startup_stm32f401retx.s
 	$(COMPILER) -c $(CFLAGS) $(INCLUDE) $^ -o $@
 
-$(OUTPUT_DIR)/gpio.o: ../GPIO/driver/gpio.c
+$(OUTPUT_DIR)/syscalls.o: common/from_ST/syscalls.c
 	$(COMPILER) -c $(CFLAGS) $(INCLUDE) $^ -o $@
 
-$(OUTPUT_DIR)/syscalls.o: system/syscalls.c
+$(OUTPUT_DIR)/sysmem.o: common/from_ST/sysmem.c
 	$(COMPILER) -c $(CFLAGS) $(INCLUDE) $^ -o $@
 
-$(OUTPUT_DIR)/sysmem.o: system/sysmem.c
+$(OUTPUT_DIR)/gpio.o: driver/src/gpio.c
 	$(COMPILER) -c $(CFLAGS) $(INCLUDE) $^ -o $@
 
-$(OUTPUT_DIR)/stub.o: Src/stub.c
+$(OUTPUT_DIR)/stub.o: driver/src/stub.c
 	$(COMPILER) -c $(CFLAGS) $(INCLUDE) $^ -o $@
 
-$(OUTPUT_DIR)/external_interrupt.o: ../EXTI/driver/external_interrupt.c
+$(OUTPUT_DIR)/external_interrupt.o: driver/src/external_interrupt.c
 	$(COMPILER) -c $(CFLAGS) $(INCLUDE) $^ -o $@
 
-$(OUTPUT_DIR)/interrupt.o: ../NVIC/driver/interrupt.c
+$(OUTPUT_DIR)/interrupt.o: driver/src/interrupt.c
 	$(COMPILER) -c $(CFLAGS) $(INCLUDE) $^ -o $@
 
-$(OUTPUT_DIR)/spi.o: ../SPI/driver/spi.c
+$(OUTPUT_DIR)/$(TEST_FILE).o: test/$(MODULE)/$(TEST_FILE).c
 	$(COMPILER) -c $(CFLAGS) $(INCLUDE) $^ -o $@
 
-$(OUTPUT_DIR)/$(TEST_FILE).o: ../$(MODULE)/test/$(TEST_FILE).c
-	$(COMPILER) -c $(CFLAGS) $(INCLUDE) $^ -o $@
-
-# Load elf to target board
+# Load .elf to target board and start debug
 debug: build
 	$(OZONE_DIR) -project $(OZONE_CFG)
 
-# Make elf file for debug
+# Create .elf file
 build: make_dir
 	$(COMPILER) -g $(CFLAGS) -T $(LINKER_SCRIPT_FILE) $(INCLUDE) $(SRC_FILE) -o $(OUTPUT_DIR)/$(ELF_FILE)
 
