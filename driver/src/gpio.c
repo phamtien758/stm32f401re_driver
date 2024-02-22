@@ -64,6 +64,29 @@ ReturnType Gpio_Init(Gpio_RegDef *p_Gpio_st, const Gpio_Config *p_GpioCfg_st)
 
     if(FALSE == Gpio_IsLocked(p_Gpio_st, p_GpioCfg_st->Gpio_PinNum_e))
     {
+        /* Pin alternate function configuration */
+        /* Because each pin consume 4 bits in AFR register,
+           so from Pin number 8 onward, 
+           configuration value will be write to AFRH */
+        if(GPIO_PINNUM_8 <= p_GpioCfg_st->Gpio_PinNum_e)
+        {
+            TempValue_u32 = p_GpioCfg_st->Gpio_PinAltFun_e << \
+                            GPIO_AFRH_BIT_POS(p_GpioCfg_st->Gpio_PinNum_e);
+            /* Because number of bit is larger than 1,
+                so need to clear before write */
+            p_Gpio_st->AFRH &= ~GPIO_AFRH_BIT_MASK(p_GpioCfg_st->Gpio_PinNum_e);
+            p_Gpio_st->AFRH |= TempValue_u32;
+        }
+        else
+        {
+            TempValue_u32 = p_GpioCfg_st->Gpio_PinAltFun_e << \
+                            GPIO_AFRL_BIT_POS(p_GpioCfg_st->Gpio_PinNum_e);
+            /* Because number of bit is larger than 1,
+                so need to clear before write */
+            p_Gpio_st->AFRL &= ~GPIO_AFRL_BIT_MASK(p_GpioCfg_st->Gpio_PinNum_e);
+            p_Gpio_st->AFRL |= TempValue_u32;
+        }
+
         /* Pin mode Configuration */
         TempValue_u32 = p_GpioCfg_st->Gpio_PinMode_e << \
                         GPIO_MODER_BIT_POS(p_GpioCfg_st->Gpio_PinNum_e);
@@ -92,29 +115,6 @@ ReturnType Gpio_Init(Gpio_RegDef *p_Gpio_st, const Gpio_Config *p_GpioCfg_st)
            so need to clear before write */
         p_Gpio_st->PUPDR &= ~GPIO_MODER_BIT_MASK(p_GpioCfg_st->Gpio_PinNum_e);
         p_Gpio_st->PUPDR |= TempValue_u32;
-
-        /* Pin alternate function configuration */
-        /* Because each pin consume 4 bits in AFR register,
-           so from Pin number 8 onward, 
-           configuration value will be write to AFRH */
-        if(GPIO_PINNUM_8 <= p_GpioCfg_st->Gpio_PinNum_e)
-        {
-            TempValue_u32 = p_GpioCfg_st->Gpio_PinAltFun_e << \
-                            GPIO_AFRH_BIT_POS(p_GpioCfg_st->Gpio_PinNum_e);
-            /* Because number of bit is larger than 1,
-                so need to clear before write */
-            p_Gpio_st->AFRH &= ~GPIO_AFRH_BIT_MASK(p_GpioCfg_st->Gpio_PinNum_e);
-            p_Gpio_st->AFRH |= TempValue_u32;
-        }
-        else
-        {
-            TempValue_u32 = p_GpioCfg_st->Gpio_PinAltFun_e << \
-                            GPIO_AFRL_BIT_POS(p_GpioCfg_st->Gpio_PinNum_e);
-            /* Because number of bit is larger than 1,
-                so need to clear before write */
-            p_Gpio_st->AFRL &= ~GPIO_AFRL_BIT_MASK(p_GpioCfg_st->Gpio_PinNum_e);
-            p_Gpio_st->AFRL |= TempValue_u32;
-        }
 
         /* External interrupt configuration */
         if(ENABLE == (p_GpioCfg_st->Gpio_ExIntEnable_u8))
